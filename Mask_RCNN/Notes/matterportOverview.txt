@@ -1,0 +1,51 @@
+Mask R-CNN is an instance segmentation framework consisting of two main stages, first it generates region proposals, then it classifies proposals and generates bounding boxes and masks.
+
+Modules:
+1. Backbone
+ResNet101 for feature extraction
+feature map of shape 32x32x2048
+backbone is built in function resnet_graph()
+
+2. Feature Pyramid Network
+Optional addition to  standard feature extraction pyramid by adding a second pyramid
+takes high level features from first pyramid and passes them down to lower layers
+allowing access to high and low level features at every level
+FPN is in MaskRCNN.build(), after building ResNet
+FPN requires feature map at every level of second pyramid
+which feature map is to be used is picked dynamically depending ob object size
+
+3. Region Proposal Network
+Small neural net that scans image and finds areas that contain objects
+Approx 200k generated overlapping and various sized anchor boxes created
+scans anchors in parallel and over feature map rather than image directly
+RPN is in rpn_graph()
+anchor scales and aspect ratios in config.py,
+under RPN_ANCHOR_SCALES and RPN_ANCHOR_RATIOS
+outputs anchor class (foreground or background) and bounding box refinement
+uses Non-max Suppression to pick from overlapping anchors
+passes proposals to next stage
+
+4. ROI Classifier & Bounding Box Regressor
+Runs on ROI proposals, two outputs for each ROI, class and bounding box refinement
+class has # of classes plus background class, which causes ROI to be discarded
+
+5. ROI Pooling (ROIAlign)
+used to handle non-fixed ROI proposal input sizes
+crops part of feature map and resizes to fixed size
+ROIAlign uses bilinear interpolation to avoid non-integer pixel crop positions
+uses tf's crop_and_resize function
+code in PyramidROIAlign
+
+(Faster R-CNN at this point)
+
+6. Segmentation Masks (Mask R-CNN addition)
+mask branch conv net that takes positive regions from ROI classifier (prev) and generates masks of 28x28 pixels using floats to hold more details than binary vals. ground-truth masks are scaled down to 28x28 during training to compute loss, and during detection (inferencing) the predicted masks are scaled to the size of the ROI bounding box to give one final mask per object.
+mask branch is in build_fpn_mask_graph()
+
+
+
+
+
+
+3. 
+
